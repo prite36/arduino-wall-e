@@ -1,14 +1,19 @@
 #define BLYNK_PRINT Serial
 #include <ESP8266WiFi.h>
 #include <BlynkSimpleEsp8266.h>
+#include <Servo.h>
+
+Servo servo;
 
 #define leftMotorSpeed  D1
 #define rightMotorSpeed D2
 #define leftMotorDir    D3
 #define rightMotorDir   D4
 
+#define servoDir D5 
+
 char auth[] = "7b33b2482f1b48cdbd2e84a386937e38";
-char ssid[] = "Sprite-wifi";
+char ssid[] = "prite-iot";
 char pass[] = "0837177022";
 
 int minRange = 312;
@@ -21,8 +26,8 @@ int noSpeed = 0;
 
 void moveControl(int x, int y)
 {
-    if(x == 512 && y == 512)
-  {
+  /*
+    if(x == 512 && y == 512){
     analogWrite(leftMotorSpeed,noSpeed);
   } else if (y> 512){
     digitalWrite(leftMotorDir,HIGH);
@@ -30,8 +35,9 @@ void moveControl(int x, int y)
   } else if (y < 512) {
     digitalWrite(leftMotorDir, LOW);
     analogWrite(leftMotorSpeed, 512+(511-y));
-    }
-/*
+  }
+  */
+
   if(y >= maxRange && x >= minRange && x <= maxRange) //zataci R
   {
     digitalWrite(rightMotorDir,HIGH); 
@@ -91,7 +97,8 @@ void moveControl(int x, int y)
     analogWrite(rightMotorSpeed,maxSpeed);
     analogWrite(leftMotorSpeed,minSpeed);
   }
-  */
+
+  
 }
 
 void setup()
@@ -109,8 +116,9 @@ void setup()
   digitalWrite(leftMotorSpeed, LOW);
   digitalWrite(rightMotorDir, HIGH);
   digitalWrite(leftMotorDir,HIGH);
-
- 
+  
+  servo.attach(servoDir);
+  servoGo(90);
  }
 
 
@@ -126,10 +134,20 @@ BLYNK_WRITE(V1)
   int x = param[0].asInt();
   int y = param[1].asInt();
 
-  Serial.print("x value is: ");
-  Serial.println(x);
-  Serial.print("y value is: ");
-  Serial.println(y);
-
   moveControl(x,y);
+}
+BLYNK_WRITE(V2)
+{
+   servo.write(param.asInt());
+}
+void servoGo(byte finalAngle){
+   byte currentAngle = servo.read();   //servo position
+   if (finalAngle > currentAngle) {
+    for (int i = currentAngle; i < finalAngle ; i++){
+     servo.write(i); 
+     delay(50);   } }
+   else {
+   for (int i = currentAngle; i > finalAngle ; i--){
+     servo.write(i); 
+     delay(50);   } }
 }
