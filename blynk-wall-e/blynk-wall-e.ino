@@ -2,6 +2,7 @@
 #include <ESP8266WiFi.h>
 #include <BlynkSimpleEsp8266.h>
 #include <Servo.h>
+#include <Adafruit_NeoPixel.h>
 
 Servo servo;
 
@@ -10,10 +11,14 @@ Servo servo;
 #define leftMotorDir    D3
 #define rightMotorDir   D4
 
-#define servoDir D5 
+#define servoPin D5 
+#define neoPixelPin D6
+#define numPixels 2
+
+Adafruit_NeoPixel pixels = Adafruit_NeoPixel(numPixels, neoPixelPin, NEO_GRB + NEO_KHZ800);
 
 char auth[] = "7b33b2482f1b48cdbd2e84a386937e38";
-char ssid[] = "prite-iot";
+char ssid[] = "Sprite-wifi";
 char pass[] = "0837177022";
 
 int minRange = 312;
@@ -24,8 +29,7 @@ int maxSpeed = 1020;
 int noSpeed = 0;
 
 
-void moveControl(int x, int y)
-{
+void moveControl(int x, int y){
   /*
     if(x == 512 && y == 512){
     analogWrite(leftMotorSpeed,noSpeed);
@@ -101,8 +105,7 @@ void moveControl(int x, int y)
   
 }
 
-void setup()
-{
+void setup(){
   Serial.begin(9600);
   Blynk.begin(auth, ssid, pass);
  
@@ -117,27 +120,29 @@ void setup()
   digitalWrite(rightMotorDir, HIGH);
   digitalWrite(leftMotorDir,HIGH);
   
-  servo.attach(servoDir);
+  servo.attach(servoPin);
   servoGo(90);
+
+  pixels.begin();
  }
 
 
-void loop()
-{
+void loop(){
  
   Blynk.run();
 }
 
 
-BLYNK_WRITE(V1)
-{
+BLYNK_WRITE(V1){
   int x = param[0].asInt();
   int y = param[1].asInt();
-
+  Serial.print("x value is: ");
+  Serial.println(x);
+  Serial.print("y value is: ");
+  Serial.println(y);
   moveControl(x,y);
 }
-BLYNK_WRITE(V2)
-{
+BLYNK_WRITE(V2){
    servo.write(param.asInt());
 }
 void servoGo(byte finalAngle){
@@ -151,3 +156,19 @@ void servoGo(byte finalAngle){
      servo.write(i); 
      delay(50);   } }
 }
+BLYNK_WRITE(V3){
+
+int R = param[0].asInt();
+int G = param[1].asInt();
+int B = param[2].asInt();
+
+  for(int i=0;i<numPixels;i++){ 
+    pixels.setPixelColor(i, pixels.Color(R,G,B));
+    pixels.show();
+  }
+}
+BLYNK_WRITE(V4) {
+  pixels.setBrightness(param.asInt());
+  pixels.show();
+}
+  
